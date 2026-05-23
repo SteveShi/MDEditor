@@ -22,8 +22,8 @@ public final class MarkdownHighlighter: @unchecked Sendable {
         NSFont.systemFont(ofSize: baseFont.pointSize * 0.85, weight: .light)
     }
 
-    /// 是否暗色主题
-    public var isDarkTheme: Bool = false
+    /// 当前主题。
+    public var theme: EditorTheme = .default
 
     /// 行高倍数
     public var lineHeightMultiple: CGFloat = 1.5
@@ -33,29 +33,15 @@ public final class MarkdownHighlighter: @unchecked Sendable {
 
     // MARK: - Colors
 
-    private var textColor: NSColor {
-        isDarkTheme ? NSColor(white: 0.88, alpha: 1.0) : NSColor(white: 0.15, alpha: 1.0)
-    }
-
-    private var headingColor: NSColor {
-        isDarkTheme ? .white : .black
-    }
-
-    private var syntaxColor: NSColor {
-        NSColor(white: 0.5, alpha: 0.6)
-    }
-
-    private var linkColor: NSColor { .systemBlue }
-
-    private var codeColor: NSColor {
-        isDarkTheme
-            ? NSColor(red: 1.0, green: 0.6, blue: 0.6, alpha: 1.0)
-            : NSColor(red: 0.8, green: 0.2, blue: 0.2, alpha: 1.0)
-    }
-
-    private var codeBackground: NSColor {
-        isDarkTheme ? NSColor(white: 0.15, alpha: 1.0) : NSColor(white: 0.95, alpha: 1.0)
-    }
+    private var textColor: NSColor { theme.foreground.nsColor }
+    private var headingColor: NSColor { theme.heading.nsColor }
+    private var syntaxColor: NSColor { theme.syntaxMarker.nsColor }
+    private var emphasisColor: NSColor { theme.emphasis.nsColor }
+    private var linkColor: NSColor { theme.link.nsColor }
+    private var codeColor: NSColor { theme.inlineCode.nsColor }
+    private var codeBackground: NSColor { theme.inlineCodeBackground.nsColor }
+    private var codeBlockBackground: NSColor { theme.codeBlockBackground.nsColor }
+    private var blockquoteColor: NSColor { theme.blockquote.nsColor }
 
     // MARK: - Regex Patterns
 
@@ -214,6 +200,9 @@ public final class MarkdownHighlighter: @unchecked Sendable {
 
     // MARK: - Public Helper Methods
 
+    /// 用于宿主同步 `typingAttributes` 中的前景色。
+    public var foregroundNSColor: NSColor { textColor }
+
     public func createBaseParagraphStyle() -> NSMutableParagraphStyle {
         let style = NSMutableParagraphStyle()
         style.lineHeightMultiple = lineHeightMultiple
@@ -285,9 +274,10 @@ public final class MarkdownHighlighter: @unchecked Sendable {
     private func applyBoldStyle(to storage: NSTextStorage, match: NSTextCheckingResult) {
         let fullRange = match.range
 
-        // 1. 全量应用粗体字体
+        // 1. 全量应用粗体字体 + 强调色
         let boldFont = NSFontManager.shared.convert(baseFont, toHaveTrait: .boldFontMask)
         storage.addAttribute(.font, value: boldFont, range: fullRange)
+        storage.addAttribute(.foregroundColor, value: emphasisColor, range: fullRange)
 
         // 2. 仅对符号进行染色淡化
         let startMarker = NSRange(location: fullRange.location, length: 2)
@@ -300,9 +290,10 @@ public final class MarkdownHighlighter: @unchecked Sendable {
         let fullRange = match.range
         let contentRange = match.range(at: 1)
 
-        // 内容斜体
+        // 内容斜体 + 强调色
         let italicFont = NSFontManager.shared.convert(baseFont, toHaveTrait: .italicFontMask)
-        storage.addAttribute(.font, value: italicFont, range: contentRange)
+        storage.addAttributes(
+            [.font: italicFont, .foregroundColor: emphasisColor], range: contentRange)
 
         // 语法标记淡化
         let startMarker = NSRange(location: fullRange.location, length: 1)
@@ -378,10 +369,8 @@ public final class MarkdownHighlighter: @unchecked Sendable {
     private func applyBlockquoteStyle(to storage: NSTextStorage, match: NSTextCheckingResult) {
         let fullRange = match.range
 
-        // 引用样式
-        let quoteColor =
-            isDarkTheme ? NSColor(white: 0.6, alpha: 1.0) : NSColor(white: 0.4, alpha: 1.0)
-        storage.addAttribute(.foregroundColor, value: quoteColor, range: fullRange)
+        // 引用样式使用主题中的 blockquote 色
+        storage.addAttribute(.foregroundColor, value: blockquoteColor, range: fullRange)
 
         // > 标记淡化
         let markerRange = NSRange(location: fullRange.location, length: 2)
@@ -507,7 +496,7 @@ public final class MarkdownHighlighter: @unchecked Sendable {
                 [
                     .font: NSFont.monospacedSystemFont(ofSize: baseFont.pointSize * 0.92, weight: .regular),
                     .foregroundColor: codeColor,
-                    .backgroundColor: codeBackground,
+                    .backgroundColor: codeBlockBackground,
                 ],
                 range: match.range
             )

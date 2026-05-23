@@ -34,6 +34,9 @@ public struct EditorConfiguration: Sendable, Equatable, Hashable {
     /// Markdown 标准
     public var markdownStandard: MarkdownStandard
 
+    /// 编辑器主题（字符着色、代码块底色、光标色等）
+    public var theme: EditorTheme
+
     /// 水平边距
     public var horizontalPadding: CGFloat = 40
     /// 垂直边距
@@ -65,7 +68,8 @@ public struct EditorConfiguration: Sendable, Equatable, Hashable {
         paragraphSpacing: 18.0,
         firstLineIndent: 0.0,
         typewriterMode: false,
-        markdownStandard: .markdownXL
+        markdownStandard: .markdownXL,
+        theme: .default
     )
 
     public init(
@@ -76,6 +80,7 @@ public struct EditorConfiguration: Sendable, Equatable, Hashable {
         firstLineIndent: CGFloat = 0.0,
         typewriterMode: Bool = false,
         markdownStandard: MarkdownStandard = .markdownXL,
+        theme: EditorTheme = .default,
         imageProvider: (@Sendable (String) -> NSImage?)? = nil
     ) {
         self.fontName = fontName
@@ -85,6 +90,7 @@ public struct EditorConfiguration: Sendable, Equatable, Hashable {
         self.firstLineIndent = firstLineIndent
         self.typewriterMode = typewriterMode
         self.markdownStandard = markdownStandard
+        self.theme = theme
         self.imageProvider = imageProvider
     }
 
@@ -96,6 +102,7 @@ public struct EditorConfiguration: Sendable, Equatable, Hashable {
             && lhs.firstLineIndent == rhs.firstLineIndent
             && lhs.typewriterMode == rhs.typewriterMode
             && lhs.markdownStandard == rhs.markdownStandard
+            && lhs.theme == rhs.theme
             && lhs.horizontalPadding == rhs.horizontalPadding
             && lhs.verticalPadding == rhs.verticalPadding && lhs.fontSize == rhs.fontSize
     }
@@ -108,6 +115,7 @@ public struct EditorConfiguration: Sendable, Equatable, Hashable {
         hasher.combine(firstLineIndent)
         hasher.combine(typewriterMode)
         hasher.combine(markdownStandard)
+        hasher.combine(theme)
         hasher.combine(horizontalPadding)
         hasher.combine(verticalPadding)
         hasher.combine(fontSize)

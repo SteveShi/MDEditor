@@ -22,7 +22,7 @@ public class MDEditorProxy: ObservableObject {
     internal var replaceAction: ((String, String) -> Void)?
     internal var replaceAllAction: ((String, String) -> Void)?
     internal var printAction: (() -> Void)?
-    internal var setHighlighterDarkThemeAction: ((Bool) -> Void)?
+    internal var setEditorThemeAction: ((EditorTheme) -> Void)?
 
     // MARK: - Initializer
 
@@ -62,7 +62,7 @@ public class MDEditorProxy: ObservableObject {
         printAction?()
     }
 
-    public func setTheme(isDark: Bool) {
-        setHighlighterDarkThemeAction?(isDark)
+    public func setTheme(_ theme: EditorTheme) {
+        setEditorThemeAction?(theme)
     }
 }

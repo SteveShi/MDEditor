@@ -161,8 +161,8 @@ public struct MDEditorView: NSViewRepresentable {
                 textView?.printView(nil)
             }
 
-            parent.proxy.setHighlighterDarkThemeAction = { [weak textView] isDark in
-                textView?.updateTheme(isDark: isDark)
+            parent.proxy.setEditorThemeAction = { [weak textView] theme in
+                textView?.apply(theme: theme)
             }
         }
     }
@@ -197,7 +197,7 @@ public struct MDEditorView: NSViewRepresentable {
 
         // 应用初始配置
         textView.applyConfiguration(configuration)
-        textView.updateTheme(isDark: colorScheme == .dark)
+        textView.apply(theme: configuration.theme)
 
         context.coordinator.setupProxyActions()
 
@@ -215,7 +215,7 @@ public struct MDEditorView: NSViewRepresentable {
 
         // 2. 只有在非输入状态下，才同步配置与主题
         textView.applyConfiguration(configuration)
-        textView.updateTheme(isDark: colorScheme == .dark)
+        textView.apply(theme: configuration.theme)
 
         // 3. 干净对比同步：剔除富文本占位符，避免冗余刷新
         let currentCleanText = textView.string.replacingOccurrences(of: "\u{FFFC}", with: "")
@@ -317,13 +317,13 @@ class MarkdownTextView: NSTextView {
         needsDisplay = true
     }
 
-    func updateTheme(isDark: Bool) {
-        // 防抖：如果主题未变化，直接返回，避免触发全量重绘
-        guard highlighter.isDarkTheme != isDark else { return }
+    func apply(theme: EditorTheme) {
+        // 防抖：主题完全相同则不触发重绘
+        guard highlighter.theme != theme else { return }
 
-        highlighter.isDarkTheme = isDark
+        highlighter.theme = theme
         backgroundColor = .clear
-        insertionPointColor = isDark ? .white : .black
+        insertionPointColor = theme.insertionPoint.nsColor
         highlightMarkdown()
     }
 
@@ -394,6 +394,7 @@ class MarkdownTextView: NSTextView {
 
     func updateTypingAttributes() {
         let range = selectedRange()
+        let fallbackForeground = highlighter.foregroundNSColor
 
         if range.location > 0, let textStorage = textStorage {
             let prevCharRange = NSRange(location: range.location - 1, length: 1)
@@ -408,7 +409,7 @@ class MarkdownTextView: NSTextView {
                     if currentChar != "\n" {
                         var attrs = textStorage.attributes(at: range.location, effectiveRange: nil)
                         if (attrs[.foregroundColor] as? NSColor)?.alphaComponent == 0.6 {
-                            attrs[.foregroundColor] = highlighter.isDarkTheme ? NSColor.white : NSColor.black
+                            attrs[.foregroundColor] = fallbackForeground
                         }
                         attrs.removeValue(forKey: .attachment)
                         attrs.removeValue(forKey: NSAttributedString.Key("MarkdownSource"))
@@ -420,14 +421,14 @@ class MarkdownTextView: NSTextView {
                 typingAttributes = [
                     .font: highlighter.baseFont,
                     .paragraphStyle: paraStyle,
-                    .foregroundColor: highlighter.isDarkTheme ? NSColor.white : NSColor.black,
+                    .foregroundColor: fallbackForeground,
                 ]
                 return
             }
 
             var attrs = textStorage.attributes(at: range.location - 1, effectiveRange: nil)
             if (attrs[.foregroundColor] as? NSColor)?.alphaComponent == 0.6 {
-                attrs[.foregroundColor] = highlighter.isDarkTheme ? NSColor.white : NSColor.black
+                attrs[.foregroundColor] = fallbackForeground
             }
             attrs.removeValue(forKey: .attachment)
             attrs.removeValue(forKey: NSAttributedString.Key("MarkdownSource"))
@@ -439,7 +440,7 @@ class MarkdownTextView: NSTextView {
         typingAttributes = [
             .font: highlighter.baseFont,
             .paragraphStyle: paraStyle,
-            .foregroundColor: highlighter.isDarkTheme ? NSColor.white : NSColor.black,
+            .foregroundColor: fallbackForeground,
         ]
     }
 }
