@@ -20,11 +20,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Select Xcode
-        run: |
-          sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer || \
-            sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)/Contents/Developer"
-          xcodebuild -version
-          swift --version
+        uses: SteveShi/setup-xcode@v2
+        with:
+          xcode-version: 'latest-stable'
 
       - name: Install xcodegen
         run: |
