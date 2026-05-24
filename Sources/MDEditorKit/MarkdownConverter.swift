@@ -175,6 +175,8 @@ public struct MarkdownConverter {
             return html
         case .thematicBreak:
             return "<hr />\n"
+        @unknown default:
+            return ""
         }
     }
 
@@ -184,6 +186,8 @@ public struct MarkdownConverter {
         case .center: return " align=\"center\""
         case .right: return " align=\"right\""
         case .none: return ""
+        @unknown default:
+            return ""
         }
     }
 
@@ -217,6 +221,8 @@ public struct MarkdownConverter {
             return "<img src=\"\(resolved.htmlAttributeEscaped())\" alt=\"\(alt.htmlAttributeEscaped())\" />"
         case let .math(content, _):
             return "<span class=\"math\">\(content.htmlEscaped())</span>"
+        @unknown default:
+            return ""
         }
     }
 
@@ -240,6 +246,8 @@ public struct MarkdownConverter {
             return rows.map { row in row.cells.map { plainText(from: $0.content) }.joined(separator: " | ") }.joined(separator: "\n")
         case .thematicBreak:
             return ""
+        @unknown default:
+            return ""
         }
     }
 
@@ -260,6 +268,7 @@ public struct MarkdownConverter {
         case let .link(_, children): return plainText(from: children)
         case let .image(_, children): return plainText(from: children)
         case let .math(content, _): return content
+        @unknown default: return ""
         }
     }
     

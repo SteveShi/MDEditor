@@ -31,11 +31,12 @@ xcodebuild archive \
     -scheme "${FRAMEWORK_NAME}" \
     -destination "generic/platform=macOS" \
     -archivePath "${OUTPUT_DIR}/macOS.xcarchive" \
+    MACOSX_DEPLOYMENT_TARGET=14.0 \
     SKIP_INSTALL=NO \
     BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
     SWIFT_VERIFY_EMITTED_MODULE_INTERFACE=NO \
-    OTHER_SWIFT_FLAGS="-no-verify-emitted-module-interface" \
-    | xcbeautify || true
+    OTHER_SWIFT_FLAGS="-no-verify-emitted-module-interface -enable-experimental-feature Lifetimes" \
+    | xcbeautify
 
 # 4. Create XCFramework
 echo "==> Creating XCFramework..."

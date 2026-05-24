@@ -1,6 +1,9 @@
 name: MDEditorKit
 options:
   bundleIdPrefix: com.steveshi
+settings:
+  MACOSX_DEPLOYMENT_TARGET: "14.0"
+  SWIFT_VERSION: "6.0"
 targets:
   MDEditorKit:
     type: framework
