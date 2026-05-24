@@ -75,6 +75,19 @@ public struct MDEditorView: NSViewRepresentable {
 
             // 触发打字机模式滚动
             textView.scrollToCenter()
+
+            // 向上层广播选区/光标变化（包含纯光标移动），用于上下文敏感 UI
+            notifySelectionChange(in: textView)
+        }
+
+        /// 把当前选区与完整文本派发给 proxy.onSelectionChange。
+        /// 注意：完整文本会通过 `reconstructMarkdown` 还原（与 textDidChange 走同一路径），
+        /// 让外部拿到的总是 Markdown 源码而不是带占位符的富文本。
+        func notifySelectionChange(in textView: MarkdownTextView) {
+            guard let callback = parent.proxy.onSelectionChange else { return }
+            let range = textView.selectedRange()
+            let text = reconstructMarkdown(from: textView.textStorage)
+            callback(range, text)
         }
 
         // MARK: - Proxy Sync
@@ -100,6 +113,15 @@ public struct MDEditorView: NSViewRepresentable {
                 guard let tv = textView else { return nil }
                 let range = tv.selectedRange()
                 return (tv.string as NSString).substring(with: range)
+            }
+
+            parent.proxy.getSelectedRangeAction = { [weak textView] in
+                textView?.selectedRange() ?? NSRange(location: 0, length: 0)
+            }
+
+            parent.proxy.getFullTextAction = { [weak self, weak textView] in
+                guard let self = self, let tv = textView else { return "" }
+                return self.reconstructMarkdown(from: tv.textStorage)
             }
 
             parent.proxy.findNextAction = { [weak textView] searchText in
@@ -200,6 +222,13 @@ public struct MDEditorView: NSViewRepresentable {
         textView.apply(theme: configuration.theme)
 
         context.coordinator.setupProxyActions()
+
+        // 视图挂载后立即派发一次初始选区，确保上层 UI（如上下文敏感工具栏）
+        // 在没有任何用户输入前也能进入正确状态。
+        DispatchQueue.main.async { [weak coordinator = context.coordinator] in
+            guard let coordinator = coordinator, let tv = coordinator.textView else { return }
+            coordinator.notifySelectionChange(in: tv)
+        }
 
         return scrollView
     }
