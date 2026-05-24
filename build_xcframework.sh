@@ -33,6 +33,8 @@ xcodebuild archive \
     -archivePath "${OUTPUT_DIR}/macOS.xcarchive" \
     SKIP_INSTALL=NO \
     BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
+    SWIFT_VERIFY_EMITTED_MODULE_INTERFACE=NO \
+    OTHER_SWIFT_FLAGS="-no-verify-emitted-module-interface" \
     | xcbeautify || true
 
 # 4. Create XCFramework
