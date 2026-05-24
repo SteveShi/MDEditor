@@ -19,6 +19,8 @@ public class MDEditorProxy: ObservableObject {
     internal var getSelectedTextAction: (() -> String?)?
     internal var getSelectedRangeAction: (() -> NSRange)?
     internal var getFullTextAction: (() -> String)?
+    internal var replaceRangeAction: ((NSRange, String) -> Void)?
+    internal var setSelectedRangeAction: ((NSRange) -> Void)?
     internal var findNextAction: ((String) -> Void)?
     internal var findPreviousAction: ((String) -> Void)?
     internal var replaceAction: ((String, String) -> Void)?
@@ -62,6 +64,17 @@ public class MDEditorProxy: ObservableObject {
     /// 当前编辑器完整文本（已还原 Markdown 源）。视图未挂载时返回空串。
     public func getFullText() -> String {
         getFullTextAction?() ?? ""
+    }
+
+    /// 用 `replacement` 替换 `range` 范围内的文本。
+    /// 用于行级 block 前缀切换等需要原子替换的场景。
+    public func replace(range: NSRange, with replacement: String) {
+        replaceRangeAction?(range, replacement)
+    }
+
+    /// 设置当前选区或光标位置。
+    public func setSelectedRange(_ range: NSRange) {
+        setSelectedRangeAction?(range)
     }
 
     public func findNext(text: String) {

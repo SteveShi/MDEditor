@@ -124,6 +124,27 @@ public struct MDEditorView: NSViewRepresentable {
                 return self.reconstructMarkdown(from: tv.textStorage)
             }
 
+            parent.proxy.replaceRangeAction = { [weak textView] range, replacement in
+                guard let tv = textView else { return }
+                // 走 insertText 让 NSTextView 处理撤销栈与代理回调
+                let length = (tv.string as NSString).length
+                let clamped = NSRange(
+                    location: max(0, min(range.location, length)),
+                    length: max(0, min(range.length, length - min(range.location, length)))
+                )
+                tv.insertText(replacement, replacementRange: clamped)
+            }
+
+            parent.proxy.setSelectedRangeAction = { [weak textView] range in
+                guard let tv = textView else { return }
+                let length = (tv.string as NSString).length
+                let clamped = NSRange(
+                    location: max(0, min(range.location, length)),
+                    length: max(0, min(range.length, length - min(range.location, length)))
+                )
+                tv.setSelectedRange(clamped)
+            }
+
             parent.proxy.findNextAction = { [weak textView] searchText in
                 guard let tv = textView, !searchText.isEmpty else { return }
                 let text = tv.string as NSString
